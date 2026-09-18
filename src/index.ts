@@ -19,6 +19,21 @@ export {
 } from './instagram';
 
 export {
+  fetchThrough,
+  unblockRequest,
+  unblockProvider,
+  isUnblockConfigured,
+} from './unblock';
+
+export {
+  readInstagramProfile,
+  readTimeline,
+  mapTimelineNode,
+  profileUrl,
+  profileHeaders,
+} from './instagram-web';
+
+export {
   parseEventFromPost,
   parseEventFromImage,
   isSupportedMedia,

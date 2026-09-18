@@ -43,6 +43,24 @@ export interface ApifyOptions {
   limit?: number;
 }
 
+/** Which service fetches a page we are not allowed to fetch ourselves. */
+export type UnblockProvider = 'brightdata' | 'scraperapi' | 'direct';
+
+export interface UnblockOptions {
+  /** Left unset, whichever service has a credential is used. */
+  provider?: UnblockProvider;
+  brightDataToken?: string;
+  /** The Web Unlocker zone the token belongs to. */
+  brightDataZone?: string;
+  scraperApiKey?: string;
+  /** Two-letter country to appear to be browsing from, e.g. 'mk'. */
+  countryCode?: string;
+  /** Costs more and is rarely needed: Instagram's endpoint answers JSON. */
+  renderJavaScript?: boolean;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+}
+
 export interface FetchOptions {
   /** Sent on every outbound request, so a site owner can identify the reader. */
   userAgent?: string;

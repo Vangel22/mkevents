@@ -297,3 +297,121 @@ describe('readEventsFromPage', () => {
     expect(await readEventsFromPage('https://site.mk/p', club)).toEqual([]);
   });
 });
+
+/**
+ * Some venue sites sit behind a bot check that refuses a server outright. A
+ * paid provider can fetch those, but it bills per request — so it is a second
+ * attempt after a refusal, never the way pages are normally read.
+ */
+describe('falling back to an unblocking provider', () => {
+  const ORIGINAL = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.SCRAPER_API_KEY;
+    delete process.env.BRIGHT_DATA_KEY;
+    delete process.env.UNBLOCK_PROVIDER;
+  });
+
+  afterEach(() => {
+    process.env = { ...ORIGINAL };
+    vi.restoreAllMocks();
+  });
+
+  const PAGE = 'https://klubmesto.mk/events';
+
+  /** robots.txt allowing everything, then whatever the page call should answer. */
+  function serve(pageResponse: () => Promise<Response> | Response) {
+    let call = 0;
+    return vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      call += 1;
+      if (String(input).endsWith('/robots.txt')) {
+        return { ok: true, status: 200, text: async () => 'User-agent: *\nAllow: /' } as Response;
+      }
+      return pageResponse();
+    });
+  }
+
+  const schemaPage = `<script type="application/ld+json">${JSON.stringify({
+    '@type': 'Event',
+    name: 'Behind the bot check',
+    startDate: '2026-11-20T21:00:00+01:00',
+  })}</script>`;
+
+  it('does not call a provider when the site answers on its own', async () => {
+    const call = serve(() => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'text/html' }),
+      text: async () => schemaPage,
+    } as Response));
+
+    const events = await readEventsFromPage(PAGE, { type: 'club' }, { scraperApiKey: 'k' });
+
+    expect(events).toHaveLength(1);
+    // robots.txt and the page itself; nothing went to a paid endpoint.
+    const hosts = call.mock.calls.map(c => String(c[0]));
+    expect(hosts.some(h => h.includes('scraperapi'))).toBe(false);
+  });
+
+  it('retries through the provider when the site refuses a server', async () => {
+    let seen = 0;
+    vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/robots.txt')) {
+        return { ok: true, status: 200, text: async () => 'User-agent: *\nAllow: /' } as Response;
+      }
+      if (url.includes('scraperapi')) {
+        seen += 1;
+        return { ok: true, status: 200, text: async () => schemaPage } as Response;
+      }
+      return { ok: false, status: 403, headers: new Headers(), text: async () => 'Forbidden' } as Response;
+    });
+
+    const events = await readEventsFromPage(PAGE, { type: 'club' }, { scraperApiKey: 'k' });
+
+    expect(seen).toBe(1);
+    expect(events[0].title).toBe('Behind the bot check');
+  });
+
+  it('does not retry a 404, which is an honest answer', async () => {
+    let providerCalls = 0;
+    vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/robots.txt')) {
+        return { ok: true, status: 200, text: async () => 'User-agent: *\nAllow: /' } as Response;
+      }
+      if (url.includes('scraperapi')) providerCalls += 1;
+      return { ok: false, status: 404, headers: new Headers(), text: async () => '' } as Response;
+    });
+
+    await expect(readEventsFromPage(PAGE, { type: 'club' }, { scraperApiKey: 'k' })).rejects.toThrow();
+    expect(providerCalls).toBe(0);
+  });
+
+  it('never pays a provider to get around robots.txt', async () => {
+    let providerCalls = 0;
+    vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/robots.txt')) {
+        return { ok: true, status: 200, text: async () => 'User-agent: *\nDisallow: /' } as Response;
+      }
+      if (url.includes('scraperapi')) providerCalls += 1;
+      return { ok: true, status: 200, text: async () => schemaPage } as Response;
+    });
+
+    // A site that asked not to be read is not a site to try harder against.
+    await expect(
+      readEventsFromPage(PAGE, { type: 'club' }, { scraperApiKey: 'k' }),
+    ).rejects.toMatchObject({ reason: 'disallowed' });
+
+    expect(providerCalls).toBe(0);
+  });
+
+  it('reports the original refusal when no provider is configured', async () => {
+    serve(() => ({ ok: false, status: 403, headers: new Headers(), text: async () => '' } as Response));
+
+    await expect(readEventsFromPage(PAGE, { type: 'club' })).rejects.toMatchObject({
+      reason: 'unreachable',
+    });
+  });
+});

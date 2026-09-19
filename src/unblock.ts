@@ -34,8 +34,8 @@ export function unblockProvider(options: UnblockOptions = {}): UnblockProvider |
   // Nothing chosen: use whichever is configured, so adding a key is the only
   // step. Bright Data first only because it is the one with a free allowance
   // that does not expire.
-  if (options.brightDataToken ?? process.env.BRIGHTDATA_TOKEN) return 'brightdata';
-  if (options.scraperApiKey ?? process.env.SCRAPERAPI_KEY) return 'scraperapi';
+  if (options.brightDataToken ?? process.env.BRIGHT_DATA_KEY) return 'brightdata';
+  if (options.scraperApiKey ?? process.env.SCRAPER_API_KEY) return 'scraperapi';
 
   return null;
 }
@@ -43,8 +43,8 @@ export function unblockProvider(options: UnblockOptions = {}): UnblockProvider |
 export function isUnblockConfigured(options: UnblockOptions = {}): boolean {
   const provider = unblockProvider(options);
   if (provider === 'direct') return true;
-  if (provider === 'brightdata') return Boolean(options.brightDataToken ?? process.env.BRIGHTDATA_TOKEN);
-  if (provider === 'scraperapi') return Boolean(options.scraperApiKey ?? process.env.SCRAPERAPI_KEY);
+  if (provider === 'brightdata') return Boolean(options.brightDataToken ?? process.env.BRIGHT_DATA_KEY);
+  if (provider === 'scraperapi') return Boolean(options.scraperApiKey ?? process.env.SCRAPER_API_KEY);
   return false;
 }
 
@@ -67,7 +67,7 @@ export function unblockRequest(
   }
 
   if (provider === 'scraperapi') {
-    const key = options.scraperApiKey ?? process.env.SCRAPERAPI_KEY ?? '';
+    const key = options.scraperApiKey ?? process.env.SCRAPER_API_KEY ?? '';
     const query = new URLSearchParams({ api_key: key, url });
 
     // Without this the service strips our headers, and Instagram's web endpoint
@@ -79,8 +79,8 @@ export function unblockRequest(
     return { url: `${ENDPOINTS.scraperapi}?${query.toString()}`, init: { headers } };
   }
 
-  const token = options.brightDataToken ?? process.env.BRIGHTDATA_TOKEN ?? '';
-  const zone = options.brightDataZone ?? process.env.BRIGHTDATA_ZONE ?? 'web_unlocker1';
+  const token = options.brightDataToken ?? process.env.BRIGHT_DATA_KEY ?? '';
+  const zone = options.brightDataZone ?? process.env.BRIGHT_DATA_ZONE ?? 'web_unlocker1';
 
   return {
     url: ENDPOINTS.brightdata,
@@ -105,7 +105,7 @@ export async function fetchThrough(url: string, options: UnblockOptions = {}): P
 
   if (!provider) {
     throw new ScraperError(
-      'No unblocking provider configured. Set BRIGHTDATA_TOKEN or SCRAPERAPI_KEY.',
+      'No unblocking provider configured. Set BRIGHT_DATA_KEY or SCRAPER_API_KEY.',
       'unconfigured',
     );
   }

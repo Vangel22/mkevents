@@ -10,6 +10,8 @@
  */
 export * from './types';
 export { scrapeInstagramProfile, mapPost, isConfigured, ScraperError, type ScrapedPost, } from './instagram';
+export { fetchThrough, unblockRequest, unblockProvider, isUnblockConfigured, } from './unblock';
+export { readInstagramProfile, readTimeline, mapTimelineNode, profileUrl, profileHeaders, } from './instagram-web';
 export { parseEventFromPost, parseEventFromImage, isSupportedMedia, SUPPORTED_MEDIA, type InlineImage, type SupportedMedia, } from './vision';
 export { readEventsFromPage, extractJsonLd, isEventNode, categorise, mapEvent, fetchPage, WebsiteFetchError, type WebsiteEvent, } from './website';
 export { isAllowed, parseRobots, isAllowedByRules, clearRobotsCache, DEFAULT_USER_AGENT, } from './robots';

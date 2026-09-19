@@ -8,6 +8,7 @@ exports.mapEvent = mapEvent;
 exports.fetchPage = fetchPage;
 exports.readEventsFromPage = readEventsFromPage;
 const robots_1 = require("./robots");
+const unblock_1 = require("./unblock");
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_BYTES = 3_000_000;
 /** schema.org Event and the subtypes a venue is likely to publish. */
@@ -187,7 +188,37 @@ function mapEvent(node, pageUrl, venue) {
  * venue published this data as structured markup precisely so that machines
  * would read it.
  */
-async function fetchPage(pageUrl) {
+/**
+ * Second attempt through an unblocking provider, or null if there is none.
+ *
+ * Only ever reached after a direct fetch was refused, so the free path stays
+ * the default and nothing is billed for a site that answers on its own. It is
+ * never reached when robots.txt disallowed the page: a site that asked not to
+ * be read is not a site to try harder against.
+ */
+async function viaProvider(pageUrl, options) {
+    if (!(0, unblock_1.isUnblockConfigured)(options))
+        return null;
+    try {
+        return await (0, unblock_1.fetchThrough)(pageUrl, {
+            ...options,
+            headers: { 'User-Agent': robots_1.DEFAULT_USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+        });
+    }
+    catch {
+        // The fallback failing is not more interesting than the original refusal.
+        return null;
+    }
+}
+/**
+ * Status codes worth paying a provider to retry.
+ *
+ * A block is a door held shut by a bot check, which is what an unblocker is
+ * for. A 404 is an honest answer and a 500 is the site's own fault — neither
+ * changes if the request arrives from somewhere else, so neither is retried.
+ */
+const BLOCKED_STATUSES = new Set([401, 403, 405, 406, 409, 418, 429, 503]);
+async function fetchPage(pageUrl, options = {}) {
     if (!(await (0, robots_1.isAllowed)(pageUrl))) {
         throw new WebsiteFetchError(`robots.txt disallows ${pageUrl}`, 'disallowed');
     }
@@ -200,9 +231,19 @@ async function fetchPage(pageUrl) {
         });
     }
     catch (err) {
+        // Refused outright, so there is nothing to read here. A provider fetching
+        // from a residential address is the only thing that might change that.
+        const retried = await viaProvider(pageUrl, options);
+        if (retried !== null)
+            return retried;
         throw new WebsiteFetchError(`Could not reach ${pageUrl}: ${err instanceof Error ? err.message : String(err)}`, 'unreachable');
     }
     if (!response.ok) {
+        if (BLOCKED_STATUSES.has(response.status)) {
+            const retried = await viaProvider(pageUrl, options);
+            if (retried !== null)
+                return retried;
+        }
         throw new WebsiteFetchError(`${pageUrl} returned ${response.status}`, 'unreachable');
     }
     const contentType = response.headers.get('content-type') ?? '';
@@ -220,8 +261,8 @@ async function fetchPage(pageUrl) {
     return html;
 }
 /** Everything a page publishes as a schema.org Event. */
-async function readEventsFromPage(pageUrl, venue) {
-    const html = await fetchPage(pageUrl);
+async function readEventsFromPage(pageUrl, venue, options = {}) {
+    const html = await fetchPage(pageUrl, options);
     return extractJsonLd(html)
         .filter(isEventNode)
         .map(node => mapEvent(node, pageUrl, venue))

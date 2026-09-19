@@ -1,4 +1,5 @@
 import type { EventCategory } from './types';
+import type { UnblockOptions } from './types';
 export declare class WebsiteFetchError extends Error {
     readonly reason: 'disallowed' | 'unreachable' | 'too-large' | 'not-html';
     constructor(message: string, reason: 'disallowed' | 'unreachable' | 'too-large' | 'not-html');
@@ -32,15 +33,8 @@ export interface WebsiteEvent {
 export declare function mapEvent(node: Record<string, unknown>, pageUrl: string, venue: {
     type?: string;
 }): WebsiteEvent | null;
-/**
- * Reads a venue's own page, honouring its robots.txt.
- *
- * This is the one ingestion path with neither a cost nor a terms problem: the
- * venue published this data as structured markup precisely so that machines
- * would read it.
- */
-export declare function fetchPage(pageUrl: string): Promise<string>;
+export declare function fetchPage(pageUrl: string, options?: UnblockOptions): Promise<string>;
 /** Everything a page publishes as a schema.org Event. */
 export declare function readEventsFromPage(pageUrl: string, venue: {
     type?: string;
-}): Promise<WebsiteEvent[]>;
+}, options?: UnblockOptions): Promise<WebsiteEvent[]>;

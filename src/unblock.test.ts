@@ -6,8 +6,8 @@ import { fetchThrough, isUnblockConfigured, unblockProvider, unblockRequest } fr
 const ORIGINAL = { ...process.env };
 
 beforeEach(() => {
-  delete process.env.BRIGHTDATA_TOKEN;
-  delete process.env.SCRAPERAPI_KEY;
+  delete process.env.BRIGHT_DATA_KEY;
+  delete process.env.SCRAPER_API_KEY;
   delete process.env.UNBLOCK_PROVIDER;
 });
 
@@ -35,7 +35,7 @@ describe('choosing a provider', () => {
 
   it('reads the choice from the environment', () => {
     process.env.UNBLOCK_PROVIDER = 'brightdata';
-    process.env.BRIGHTDATA_TOKEN = 'from-env';
+    process.env.BRIGHT_DATA_KEY = 'from-env';
 
     expect(unblockProvider()).toBe('brightdata');
     expect(isUnblockConfigured()).toBe(true);

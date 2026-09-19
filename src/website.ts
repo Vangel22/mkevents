@@ -1,6 +1,9 @@
 import type { EventCategory } from './types';
 
 import { isAllowed, DEFAULT_USER_AGENT } from './robots';
+import { fetchThrough, isUnblockConfigured } from './unblock';
+
+import type { UnblockOptions } from './types';
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_BYTES = 3_000_000;
@@ -220,7 +223,39 @@ export function mapEvent(
  * venue published this data as structured markup precisely so that machines
  * would read it.
  */
-export async function fetchPage(pageUrl: string): Promise<string> {
+
+/**
+ * Second attempt through an unblocking provider, or null if there is none.
+ *
+ * Only ever reached after a direct fetch was refused, so the free path stays
+ * the default and nothing is billed for a site that answers on its own. It is
+ * never reached when robots.txt disallowed the page: a site that asked not to
+ * be read is not a site to try harder against.
+ */
+async function viaProvider(pageUrl: string, options: UnblockOptions): Promise<string | null> {
+  if (!isUnblockConfigured(options)) return null;
+
+  try {
+    return await fetchThrough(pageUrl, {
+      ...options,
+      headers: { 'User-Agent': DEFAULT_USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+    });
+  } catch {
+    // The fallback failing is not more interesting than the original refusal.
+    return null;
+  }
+}
+
+/**
+ * Status codes worth paying a provider to retry.
+ *
+ * A block is a door held shut by a bot check, which is what an unblocker is
+ * for. A 404 is an honest answer and a 500 is the site's own fault — neither
+ * changes if the request arrives from somewhere else, so neither is retried.
+ */
+const BLOCKED_STATUSES = new Set([401, 403, 405, 406, 409, 418, 429, 503]);
+
+export async function fetchPage(pageUrl: string, options: UnblockOptions = {}): Promise<string> {
   if (!(await isAllowed(pageUrl))) {
     throw new WebsiteFetchError(`robots.txt disallows ${pageUrl}`, 'disallowed');
   }
@@ -234,6 +269,11 @@ export async function fetchPage(pageUrl: string): Promise<string> {
       redirect: 'follow',
     });
   } catch (err) {
+    // Refused outright, so there is nothing to read here. A provider fetching
+    // from a residential address is the only thing that might change that.
+    const retried = await viaProvider(pageUrl, options);
+    if (retried !== null) return retried;
+
     throw new WebsiteFetchError(
       `Could not reach ${pageUrl}: ${err instanceof Error ? err.message : String(err)}`,
       'unreachable',
@@ -241,6 +281,11 @@ export async function fetchPage(pageUrl: string): Promise<string> {
   }
 
   if (!response.ok) {
+    if (BLOCKED_STATUSES.has(response.status)) {
+      const retried = await viaProvider(pageUrl, options);
+      if (retried !== null) return retried;
+    }
+
     throw new WebsiteFetchError(`${pageUrl} returned ${response.status}`, 'unreachable');
   }
 
@@ -266,8 +311,9 @@ export async function fetchPage(pageUrl: string): Promise<string> {
 export async function readEventsFromPage(
   pageUrl: string,
   venue: { type?: string },
+  options: UnblockOptions = {},
 ): Promise<WebsiteEvent[]> {
-  const html = await fetchPage(pageUrl);
+  const html = await fetchPage(pageUrl, options);
 
   return extractJsonLd(html)
     .filter(isEventNode)

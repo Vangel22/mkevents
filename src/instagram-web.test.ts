@@ -6,8 +6,8 @@ import { mapTimelineNode, profileHeaders, profileUrl, readInstagramProfile, read
 const ORIGINAL = { ...process.env };
 
 beforeEach(() => {
-  delete process.env.BRIGHTDATA_TOKEN;
-  delete process.env.SCRAPERAPI_KEY;
+  delete process.env.BRIGHT_DATA_KEY;
+  delete process.env.SCRAPER_API_KEY;
   delete process.env.UNBLOCK_PROVIDER;
 });
 

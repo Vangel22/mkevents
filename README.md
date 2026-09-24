@@ -45,6 +45,17 @@ const published = await readEventsFromPage('https://a-venue.mk/events', { type: 
 | `parseEventFromPost` | a poster image plus its caption | yes — this is the hard part |
 | `readEventsFromPage` | schema.org `Event` data on a venue's site | none, it is already structured |
 | `fetchMovies` / `fetchScreenings` | a cinema's own API | none |
+| `readKarti` | karti.com.mk (and mktickets.mk): listing, then each event page for its time | none |
+| `readKupiKarta` | kupikarta.com, through the interface its event list calls | none |
+| `readWayin` | wayin.mk, through its shop interface | none |
+| `readFilharmonija` | the Macedonian Philharmonic's season page | none |
+| `readKinoverzum` | Kinoverzum's weekly programme, all five cinemas | none |
+| `LISTING_READERS` | every listing reader above, by name | — |
+
+The listing readers return `ListedEvent`: the venue is only a name, because a
+ticket site sells for dozens of venues and placing an event on the map is the
+caller's rule. Times are local wall times in North Macedonia unless they carry
+their own zone.
 | `isAllowed` | robots.txt, honoured before any page read | none |
 
 ## On the model

@@ -99,10 +99,13 @@ export function isEventNode(node: Record<string, unknown>): boolean {
 
 const KEYWORDS: Array<[EventCategory, string[]]> = [
   ['cinema', ['филм', 'кино', 'премиера', 'проекциј', 'cinema', 'film', 'screening']],
-  ['party', ['журк', 'забав', 'техно', 'party', 'techno', 'rave', 'dj ', 'clubbing']],
+  ['party', ['журк', 'забав', 'техно', 'парти', 'party', 'techno', 'rave', 'dj ', 'clubbing']],
   ['food_wine', ['вино', 'дегустац', 'вечера', 'wine', 'tasting', 'dinner', 'brunch']],
   ['cultural', ['изложб', 'театар', 'претстав', 'поезиј', 'галериј', 'exhibition', 'theatre', 'gallery']],
-  ['concert', ['концерт', 'настап', 'concert', 'live band', 'acoustic']],
+  [
+    'concert',
+    ['концерт', 'настап', 'фестивал', 'турнеја', 'бенд', 'concert', 'live band', 'acoustic', 'festival', ' live', 'tour', 'band'],
+  ],
   ['tech', ['конференц', 'работилниц', 'conference', 'workshop', 'hackathon', 'meetup']],
   ['corporate', ['корпоратив', 'corporate', 'networking']],
 ];

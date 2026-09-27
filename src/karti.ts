@@ -71,7 +71,7 @@ const CLASS_CATEGORY: Array<[string, EventCategory]> = [
   ['turski', 'cultural'],
   ['philharmonic', 'concert'],
   ['mob', 'cultural'],
-  ['sport_events', 'other'],
+  ['sport_events', 'sports'],
 ];
 
 /** The category Karti's classes state, or null when they state none. */

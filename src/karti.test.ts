@@ -90,6 +90,10 @@ describe('reading the listing and an event page', () => {
 });
 
 describe('kartiCategory', () => {
+  it('files the sport events class as sports', () => {
+    expect(kartiCategory(['sport_events', 'other'])).toBe('sports');
+  });
+
   it('puts theatre ahead of the festival it is part of', () => {
     expect(kartiCategory(['festivals', 'theater', 'other'])).toBe('cultural');
   });

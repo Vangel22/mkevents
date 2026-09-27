@@ -50,7 +50,7 @@ const CLASS_CATEGORY = [
     ['turski', 'cultural'],
     ['philharmonic', 'concert'],
     ['mob', 'cultural'],
-    ['sport_events', 'other'],
+    ['sport_events', 'sports'],
 ];
 /** The category Karti's classes state, or null when they state none. */
 function kartiCategory(classes) {

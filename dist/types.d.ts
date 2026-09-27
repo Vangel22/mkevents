@@ -1,5 +1,5 @@
 /** What kind of night this is. */
-export type EventCategory = 'concert' | 'party' | 'cinema' | 'cultural' | 'tech' | 'food_wine' | 'corporate' | 'other';
+export type EventCategory = 'concert' | 'party' | 'cinema' | 'cultural' | 'tech' | 'food_wine' | 'sports' | 'corporate' | 'other';
 /** An event as read out of a poster, before anyone decides to publish it. */
 export interface ParsedEvent {
     isEvent: boolean;

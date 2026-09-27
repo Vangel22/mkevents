@@ -6,6 +6,7 @@ export type EventCategory =
   | 'cultural'
   | 'tech'
   | 'food_wine'
+  | 'sports'
   | 'corporate'
   | 'other';
 

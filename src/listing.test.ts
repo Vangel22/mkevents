@@ -68,6 +68,15 @@ describe('guessCategory', () => {
     expect(guessCategory('Калиопи', 'Спектакуларен концерт на најголемата поп-дива')).toBe('concert');
   });
 
+  it('knows a match or a fight night from its title', () => {
+    expect(guessCategory('КК МЗТ Скопје Аеродром – МКК Куманово, Супер Куп „Драган Василов Цевка“')).toBe('sports');
+    expect(guessCategory('FNC 34 - Fight Night Skopje')).toBe('sports');
+  });
+
+  it('does not take "купи" (buy) for a cup', () => {
+    expect(guessCategory('Купи карта за вечерва', 'Техно журка до зори')).toBe('other');
+  });
+
   it('does not believe a party read only from a description', () => {
     // A lecture promising "забава" (fun) is not a party.
     expect(guessCategory('Психологија на успехот', 'Едукација и забава за целото семејство')).toBe('other');

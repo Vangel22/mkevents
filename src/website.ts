@@ -37,6 +37,7 @@ const TYPE_CATEGORY: Record<string, EventCategory> = {
   DanceEvent: 'party',
   ComedyEvent: 'cultural',
   FoodEvent: 'food_wine',
+  SportsEvent: 'sports',
   BusinessEvent: 'corporate',
   EducationEvent: 'tech',
 };
@@ -99,6 +100,16 @@ export function isEventNode(node: Record<string, unknown>): boolean {
 
 const KEYWORDS: Array<[EventCategory, string[]]> = [
   ['cinema', ['филм', 'кино', 'премиера', 'проекциј', 'cinema', 'film', 'screening']],
+  // Before parties and concerts: a match night is "a night out" in every
+  // other sense, and a cup final is not a festival. Stems, not words: "куп"
+  // alone is also "buy".
+  [
+    'sports',
+    [
+      'натпревар', 'кошарк', 'фудбал', 'ракомет', 'одбојк', 'тенис', 'бокс', 'маратон', 'супер куп',
+      'basketball', 'football', 'handball', 'volleyball', 'marathon', 'match day', 'fight night', 'mma', 'fnc ',
+    ],
+  ],
   ['party', ['журк', 'забав', 'техно', 'парти', 'party', 'techno', 'rave', 'dj ', 'clubbing']],
   ['food_wine', ['вино', 'дегустац', 'вечера', 'wine', 'tasting', 'dinner', 'brunch']],
   ['cultural', ['изложб', 'театар', 'претстав', 'поезиј', 'галериј', 'exhibition', 'theatre', 'gallery']],

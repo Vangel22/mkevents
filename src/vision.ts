@@ -77,6 +77,7 @@ const EventSchema = z.object({
     'cultural',
     'tech',
     'food_wine',
+    'sports',
     'corporate',
     'other',
   ]),
